@@ -17,8 +17,31 @@ from pptx.util import Inches
 # Stat extractor will pull all the data that we are uplading to mongoDb. With
 # this data we should be able to calculate all of the stats we get currently.
 # If StatMonkey is in pres mode run full StatExtractor and save the data to an atribute
+
+#          kicks[{type, start{x,y}, end{x,y}, kicker}]
+#           linebreaks[{location{x,y}, player, phase}]
+#           mauls[location{x,y}, metersGained, tryScored?]
+
 class StatExtractor:
-    pass
+    kicks = []
+    linebreaks = []
+    mauls = []
+
+    def __init__(self, xmlFiles, teamName):
+        self.xmlFiles = xmlFiles
+        self.teamName = teamName
+
+    def getAll(self):
+        pass
+    
+    def getKicks(self):
+        pass
+
+    def getLinebreaks(self):
+        pass
+
+    def getMauls(self):
+        pass
 
 class StatMonkey:
     fieldLength = 140

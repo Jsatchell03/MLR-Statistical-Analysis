@@ -6,12 +6,15 @@ import os
 
 # Handle all mongo fucntions
 
-# teams
+# teams {
+#    chicagoHounds: {2025:[{kicks, linebreaks, mauls}, by week], 2026:[]}
+# }
+#   2025
 #       week1
-#           kicks[{type, start{x,y}, end{x,y}, kicker}]
+#          kicks[{type, start{x,y}, end{x,y}, kicker}]
 #           linebreaks[{location{x,y}, player, phase}]
 #           mauls[location{x,y}, metersGained, tryScored?]
-
+ 
 
 class Mongo():
     load_dotenv()
