@@ -12,36 +12,8 @@ from operator import itemgetter
 from collections import OrderedDict
 from pptx import Presentation
 from pptx.util import Inches
+from Database.MongoDB import Mongo
 
-
-# Stat extractor will pull all the data that we are uplading to mongoDb. With
-# this data we should be able to calculate all of the stats we get currently.
-# If StatMonkey is in pres mode run full StatExtractor and save the data to an atribute
-
-#          kicks[{type, start{x,y}, end{x,y}, kicker}]
-#           linebreaks[{location{x,y}, player, phase}]
-#           mauls[location{x,y}, metersGained, tryScored?]
-
-class StatExtractor:
-    kicks = []
-    linebreaks = []
-    mauls = []
-
-    def __init__(self, xmlFiles, teamName):
-        self.xmlFiles = xmlFiles
-        self.teamName = teamName
-
-    def getAll(self):
-        pass
-    
-    def getKicks(self):
-        pass
-
-    def getLinebreaks(self):
-        pass
-
-    def getMauls(self):
-        pass
 
 class StatMonkey:
     fieldLength = 140
@@ -94,8 +66,6 @@ class StatMonkey:
             results.append(self.getMaulMap())
         return(results)
 
-# Optional param for mongo objects
-
     def getKickStats(self):
         plt.figure(figsize=(self.figWidth, self.figHeight))
         playerKicks = {}
@@ -107,11 +77,6 @@ class StatMonkey:
                 for kick in kicks:
                     player = str(
                         kick.xpath("label[group='Player'][position()=1]/text/text()")[0]
-                    )
-                    meters = int(
-                        kick.xpath("label[group='Kick Metres'][position()=1]/text/text()")[
-                            0
-                        ]
                     )
                     if player in playerKicks:
                         playerKicks[player] = playerKicks[player] + 1
@@ -818,6 +783,8 @@ def main():
 
     stats = sm.getAllStats()
     sm.addAllStatsToPres(stats)
+    
 
+    
 if __name__ == "__main__":
     main()
