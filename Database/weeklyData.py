@@ -209,10 +209,5 @@ def main():
             doc["mauls"] = mauls[i]
             db.addWeek(teams[i], doc)
 
-
-
-# Clear WEEK 1 from DB
-
-
 if __name__ == "__main__":
     main()
