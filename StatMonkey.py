@@ -28,6 +28,7 @@ class StatMonkey:
         self.linebreakKeyPlayers = []
         self.mainKickers = []
         self.penalizedProps = []
+        self.topTurnovers = []
         self.xmlFiles = xmlFiles
         self.teamName = teamName
         self.mode = mode
@@ -244,7 +245,7 @@ class StatMonkey:
                 scoredEntries += len(trys)
                 totalTrys += len(trys)
                 penKicks = root.xpath(
-                    f"//instance[code='{self.teamName} Goal Kick' and label[text='Penalty Goal' and group='Goal Type']]"
+                    f"//instance[code='{self.teamName} Goal Kick' and label[text='Penalty Goal' and group='Goal Type'] and label[text='Goal Kicked' and group='Goal Outcome']]"
                 )
                 scoredEntries += len(penKicks)
                 totalPens += len(penKicks)
@@ -1049,10 +1050,6 @@ class StatMonkey:
     def getPlayerKickPaths(self, player):
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         self.drawRugbyPitch(ax)
-        print(player)
-        print(
-            f"""//instance[code='"{self.teamName} Kick" and label[text="{player}" and group="Player"]]"""
-        )
         total = 0
         for xmlFile in self.xmlFiles:
             try:
@@ -1801,6 +1798,157 @@ class StatMonkey:
         plt.close()
         return path
 
+    # WIP
+    def getTurnoverStats(self):
+        plt.figure(figsize=(self.figWidth, self.figHeight))
+        breakdown = {}
+        total = 0
+        for xmlFile in self.xmlFiles:
+            try:
+                tree = etree.parse(str(xmlFile))
+                root = tree.getroot()
+                turnovers = root.xpath(f"//instance[code='{self.teamName} Turnover']")
+
+                for turnover in turnovers:
+                    total += 1
+                    descriptor = str(
+                        turnover.xpath("label[group='Error Descriptor']/text/text()")[0]
+                    )
+                    if "Kick" in descriptor:
+                        descriptor = "Kick Error"
+
+                    breakdown[descriptor] = (
+                        breakdown[descriptor] + 1 if descriptor in breakdown else 1
+                    )
+
+            except etree.XMLSyntaxError as e:
+                print(f"Error parsing {xmlFile.name}: {e}")
+        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_Turnover_Breakdown.png"
+        sortedBreakdown = OrderedDict(
+            sorted(breakdown.items(), key=itemgetter(1), reverse=True)
+        )
+        bars = plt.bar(sortedBreakdown.keys(), sortedBreakdown.values())
+        for bar in bars:
+            height = bar.get_height()
+            if height < 2:
+                # Place text above the bar
+                plt.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height + 0.1,  # Add a small offset above the bar
+                    f"{int(height)}",
+                    ha="center",
+                    va="bottom",  # Align to bottom of text
+                    fontweight="bold",
+                )
+            else:
+                # Keep current positioning inside the bar
+                plt.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    (height / 2),
+                    f"{int(height)}",
+                    ha="center",
+                    va="center",
+                    fontweight="bold",
+                )
+        plt.xticks(rotation=45)
+        plt.subplots_adjust(bottom=0.25)
+        plt.title(f"{self.teamName} Turnover Breakdown ({total} Total)")
+        plt.savefig(path)
+        plt.close()
+        return path
+
+    def getPlayerTurnoverCount(self):
+        plt.figure(figsize=(self.figWidth, self.figHeight))
+        breakdown = {}
+        for xmlFile in self.xmlFiles:
+            try:
+                tree = etree.parse(str(xmlFile))
+                root = tree.getroot()
+                turnovers = root.xpath(f"//instance[code='{self.teamName} Turnover']")
+
+                for turnover in turnovers:
+                    player = str(turnover.xpath("label[group='Player']/text/text()")[0])
+
+                    breakdown[player] = (
+                        breakdown[player] + 1 if player in breakdown else 1
+                    )
+
+            except etree.XMLSyntaxError as e:
+                print(f"Error parsing {xmlFile.name}: {e}")
+        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_Turnover_Count.png"
+        median = statistics.median(breakdown.values())
+        for player in breakdown:
+            if breakdown[player] > median:
+                self.topTurnovers.append(player)
+        sortedBreakdown = OrderedDict(
+            sorted(breakdown.items(), key=itemgetter(1), reverse=True)
+        )
+        bars = plt.bar(sortedBreakdown.keys(), sortedBreakdown.values())
+        for bar in bars:
+            height = bar.get_height()
+            if height < 2:
+                # Place text above the bar
+                plt.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    height + 0.1,  # Add a small offset above the bar
+                    f"{int(height)}",
+                    ha="center",
+                    va="bottom",  # Align to bottom of text
+                    fontweight="bold",
+                )
+            else:
+                # Keep current positioning inside the bar
+                plt.text(
+                    bar.get_x() + bar.get_width() / 2.0,
+                    (height / 2),
+                    f"{int(height)}",
+                    ha="center",
+                    va="center",
+                    fontweight="bold",
+                )
+        plt.xticks(rotation=60)
+        plt.subplots_adjust(bottom=0.25)
+        plt.title(f"{self.teamName} Player Turnover Count")
+        plt.savefig(path)
+        plt.close()
+        return path
+
+    def getPlayerTurnoverBD(self, player):
+        plt.figure(figsize=(self.figWidth, self.figHeight))
+        breakdown = {}
+        total = 0
+        for xmlFile in self.xmlFiles:
+            try:
+                tree = etree.parse(str(xmlFile))
+                root = tree.getroot()
+                turnovers = root.xpath(
+                    f"""//instance[code="{self.teamName} Turnover" and label[text="{player}" and group="Player"]]"""
+                )
+                for turnover in turnovers:
+                    total += 1
+                    descriptor = str(
+                        turnover.xpath("label[group='Error Descriptor']/text/text()")[0]
+                    )
+                    if "Kick" in descriptor:
+                        descriptor = "Kick Error"
+
+                    breakdown[descriptor] = (
+                        breakdown[descriptor] + 1 if descriptor in breakdown else 1
+                    )
+
+            except etree.XMLSyntaxError as e:
+                print(f"Error parsing {xmlFile.name}: {e}")
+        path = f"Stat PNGs/{player}_Turnover_Breakdown.png"
+        plt.pie(
+            breakdown.values(),
+            labels=breakdown.keys(),
+            autopct=lambda p: f"{int(int(p*sum(breakdown.values())) / 100)}",
+        )
+        plt.title(f"{player} Turnover Breakdown ({total} Total)")
+        plt.savefig(path)
+        plt.close()
+        return path
+
 
 def main():
     parser = argparse.ArgumentParser(description="Process XML files in a directory")
@@ -1817,8 +1965,8 @@ def main():
     trackedTeam = str(args.team)
     sm = StatMonkey(xml_files, trackedTeam)
 
-    stats1 = sm.getAllStats()
-    sm.addAllStatsToPres(stats1)
+    stats1 = sm.getPlayerTurnoverBD("Jordan Trainor")
+    sm.show(stats1)
 
 
 if __name__ == "__main__":
