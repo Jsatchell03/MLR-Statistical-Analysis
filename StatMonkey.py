@@ -13,6 +13,7 @@ from collections import OrderedDict
 from pptx import Presentation
 from pptx.util import Inches
 from Database.MongoDB import Mongo
+import logging
 
 
 class StatMonkey:
@@ -32,6 +33,11 @@ class StatMonkey:
         self.xmlFiles = xmlFiles
         self.teamName = teamName
         self.mode = mode
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(message)s",
+        )
+        self.logger = logging.getLogger()
         if mode == "presentation":
             self.prs = Presentation()
 
@@ -78,10 +84,16 @@ class StatMonkey:
             results.append(self.getTopCarriers())
             for player in self.topCarriers:
                 results.append(self.getCarryBreakdown(player))
+            results.append(self.getPlayerTurnoverCount())
+            for player in self.topTurnovers[:3]:
+                results.append(self.getPlayerTurnoverBD(player))
         return results
 
     def getKickStats(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Kick_Count_By_Player.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
+
         playerKicks = {}
         for xmlFile in self.xmlFiles:
             try:
@@ -140,9 +152,10 @@ class StatMonkey:
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Kick_Count_By_Player.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         if self.mode == "database":
             return
         else:
@@ -153,6 +166,8 @@ class StatMonkey:
             self.addStatToPres(stat)
 
     def getLinebreakLocations(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Linebreak_Locations.png"
+        self.logger.info(f"Started {path}")
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         self.drawRugbyPitch(ax)
         xValues = []
@@ -180,12 +195,15 @@ class StatMonkey:
                 print(f"Error parsing {xmlFile.name}: {e}")
         ax.scatter(xValues, yValues)
         plt.title(f"Linebreak Locations ({total} Total)")
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Linebreak_Locations.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getLinebreakLocationsByPlayer(self, player):
+        path = f"Stat PNGs/{player.replace(" ", "_")}_Linebreak_Locations.png"
+        self.logger.info(f"Started {path}")
+
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         self.drawRugbyPitch(ax)
         xValues = []
@@ -217,17 +235,18 @@ class StatMonkey:
                         )
                         xValues.append(xStart)
                         yValues.append(yStart)
-                        print(f"({xStart}, {yStart})")
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
         ax.scatter(xValues, yValues)
         plt.title(f"{player} Linebreak Locations")
-        path = f"Stat PNGs/{player.replace(" ", "_")}_Linebreak_Locations.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def get22Stats(self):
+        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_22_Stats.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         scoredEntries = 0
         totalEntries = 0
@@ -252,8 +271,6 @@ class StatMonkey:
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
         pointsPerEntry = round((((totalTrys * 5) + (3 * totalPens)) / totalEntries), 2)
-        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_22_Stats.png"
-
         plt.pie(
             [totalTrys, totalPens, totalEntries - (totalPens + totalTrys)],
             labels=["Try Scored", "Converted Penalty Kick", "No Points Scored"],
@@ -262,9 +279,12 @@ class StatMonkey:
         plt.title(f"Gold Zone Efficiency ({pointsPerEntry} Points Per Entry)")
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def drawRugbyPitch(self, ax):
+        self.logger.info(f"Started Drawing Full Pitch")
+
         # Draw halfway line
         ax.plot(
             [self.halfwayLine, self.halfwayLine],
@@ -547,8 +567,11 @@ class StatMonkey:
         ax.set_xticks([])
         ax.set_yticks([])
         plt.tight_layout(pad=2.5)
+        self.logger.info(f"Finished Drawing Full Pitch")
 
     def drawHalfPitch(self, ax):
+        self.logger.info(f"Started Drawing Half Pitch")
+
         halfFieldLength = 140
         halfTryZone = 40
         # Draw the field rectangle
@@ -658,8 +681,11 @@ class StatMonkey:
         ax.set_xticks([])
         ax.set_yticks([])
         plt.tight_layout(pad=2.5)
+        self.logger.info(f"Finished Drawing Half Pitch")
 
     def addStatToPres(self, statImgPath):
+        self.logger.info(f"Started Adding {statImgPath} To Pres")
+
         slide = self.prs.slides.add_slide(self.prs.slide_layouts[6])
         self.prs.slide_width = Inches(16)
         self.prs.slide_height = Inches(9)
@@ -700,8 +726,11 @@ class StatMonkey:
         )
 
         self.prs.save(f"{self.teamName}.pptx")
+        self.logger.info(f"Finished Adding {statImgPath} To Pres")
 
     def getMaulMap(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Mauls.png"
+        self.logger.info(f"Started {path}")
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         self.drawRugbyPitch(ax)
         xValues = []
@@ -753,12 +782,19 @@ class StatMonkey:
         neg = mpatches.Patch(color="#E15554", label=f"< {round(avg,1)} Meters Made")
         plt.legend(handles=[pos, neg], loc="lower left")
         plt.title(f"Maul Locations ({round(avg, 1)} Meters Per Maul)")
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Mauls.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         return path
 
     def getLinebreakCountByPlayer(self):
+
+        path = (
+            f"Stat PNGs/{self.teamName.replace(" ", "_")}_Linebreak_Count_By_Player.png"
+        )
+        self.logger.info(f"Started {path}")
+
         plt.figure(figsize=(self.figWidth, self.figHeight))
         playerBreaks = {}
         for xmlFile in self.xmlFiles:
@@ -804,17 +840,15 @@ class StatMonkey:
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
-        plt.gca().yaxis.set_major_locator(
-            tck.MultipleLocator(base=1)
-        )  # Using base=1 as an example
-        path = (
-            f"Stat PNGs/{self.teamName.replace(" ", "_")}_Linebreak_Count_By_Player.png"
-        )
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getLinebreakPhases(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Linebreak_Phases.png"
+        self.logger.info(f"Started {path}")
+
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         breakPhases = {}
         for xmlFile in self.xmlFiles:
@@ -870,12 +904,15 @@ class StatMonkey:
 
         # ax.set_aspect('equal', adjustable='box')
         ax.yaxis.set_major_locator(tck.MultipleLocator())
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Linebreak_Phases.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getKickPaths(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Kick_Paths.png"
+        self.logger.info(f"Started {path}")
+
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         self.drawRugbyPitch(ax)
         total = 0
@@ -953,12 +990,14 @@ class StatMonkey:
         kp = mpatches.Patch(color="#7768AE", label="Kick Pass")
         plt.legend(handles=[pocket, windy, ice, snow, wedge, kp], loc="lower left")
         plt.title(f"Kick Paths ({total} Total)")
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Kick_Paths.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getAttackingKickPaths(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Attacking_Kick_Paths.png"
+        self.logger.info(f"Started {path}")
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         self.drawHalfPitch(ax)
         total = 0
@@ -1042,12 +1081,15 @@ class StatMonkey:
         kp = mpatches.Patch(color="#7768AE", label="Kick Pass")
         plt.legend(handles=[pocket, windy, ice, snow, wedge, kp], loc="lower left")
         plt.title(f"Attacking Kick Paths ({total} Total)")
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Attacking_Kick_Paths.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getPlayerKickPaths(self, player):
+        path = f"Stat PNGs/{player.replace(" ", "_")}_Kick_Paths.png"
+        self.logger.info(f"Started {path}")
+
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         self.drawRugbyPitch(ax)
         total = 0
@@ -1126,12 +1168,16 @@ class StatMonkey:
         kp = mpatches.Patch(color="#7768AE", label="Kick Pass")
         plt.legend(handles=[pocket, windy, ice, snow, wedge, kp], loc="lower left")
         plt.title(f"{player} Kick Paths ({total} Total)")
-        path = f"Stat PNGs/{player.replace(" ", "_")}_Kick_Paths.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         return path
 
     def getGroupKickPaths(self, type):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_{type.capitalize()}_Kick_Paths.png"
+        self.logger.info(f"Started {path}")
+
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
         self.drawRugbyPitch(ax)
         total = 0
@@ -1215,12 +1261,15 @@ class StatMonkey:
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
         plt.title(f"{title} Kick Paths ({total} Total)")
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_{type.capitalize()}_Kick_Paths.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         return path
 
     def getScrumStats(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Scrum_Stats.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
 
         scrumStats = {
@@ -1298,12 +1347,14 @@ class StatMonkey:
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Scrum_Stats.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getScrumConPens(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Conceded_Scrum_Pens.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         penaltyCount = {}
         totalPens = 0
@@ -1350,12 +1401,15 @@ class StatMonkey:
         plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1))
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Conceded_Scrum_Pens.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getScrumWonPens(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Scrum_Pens_Won.png"
+        self.logger.info(f"Started {path}")
+
         plt.figure(figsize=(self.figWidth, self.figHeight))
         penaltyCount = {}
         totalPens = 0
@@ -1366,7 +1420,6 @@ class StatMonkey:
                 opp = root.xpath(
                     f"string(//label/text[following-sibling::group[text()='Penalty Conceded' or text()='Turnover Won' or text()='Kick' or text()='Pass' or text()='Restart']][not(text()='{self.teamName}')][1])"
                 )
-                print(opp)
                 pens = root.xpath(
                     f"//instance[code='{opp} Penalty Conceded' and label[text='Scrum Offence' and group='Pen Descriptor']]"
                 )
@@ -1400,12 +1453,15 @@ class StatMonkey:
         plt.gca().yaxis.set_major_locator(plt.MultipleLocator(1))
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Scrum_Pens_Won.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         return path
 
     def getScrumPensByPlayer(self, player):
+        path = f"Stat PNGs/{player.replace(" ", "_")}_Scrum_Pens.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         playerPens = {}
         totalPens = 0
@@ -1437,12 +1493,15 @@ class StatMonkey:
             labels=sortedPlayerPens.keys(),
             autopct=lambda p: f"{int(int(p*sum(sortedPlayerPens.values())) / 100)}",
         )
-        path = f"Stat PNGs/{player.replace(" ", "_")}_Scrum_Pens.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         return path
 
     def getTopDefendersBeaten(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Defenders_Beaten.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         defenderBeaters = {}
         for xmlFile in self.xmlFiles:
@@ -1488,9 +1547,12 @@ class StatMonkey:
         path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Defenders_Beaten.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getTopTryScorers(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Try_Scorers.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         tryScorers = {}
         for xmlFile in self.xmlFiles:
@@ -1535,12 +1597,14 @@ class StatMonkey:
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
         plt.gca().yaxis.set_major_locator(tck.MultipleLocator(base=1))
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Try_Scorers.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getTopTacklers(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Tacklers.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         tacklers = {}
         for xmlFile in self.xmlFiles:
@@ -1577,13 +1641,15 @@ class StatMonkey:
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Tacklers.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         return path
 
     def getTopDomTacklers(self):
-        # Dominant Tackle Contact
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Dom_Tacklers.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         tacklers = {}
         for xmlFile in self.xmlFiles:
@@ -1620,12 +1686,15 @@ class StatMonkey:
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Dom_Tacklers.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getTopAssisters(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Assisters.png"
+        self.logger.info(f"Started {path}")
+
         plt.figure(figsize=(self.figWidth, self.figHeight))
         assisters = {}
         for xmlFile in self.xmlFiles:
@@ -1672,13 +1741,15 @@ class StatMonkey:
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
         plt.gca().yaxis.set_major_locator(tck.MultipleLocator(base=1))
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Assisters.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     # WIP get more info about the pass
     def getAssistBreakdown(self, player):
+        path = f"Stat PNGs/{player.replace(' ', '_')}_Assist_Breakdown.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         assistStyles = {}
         for xmlFile in self.xmlFiles:
@@ -1694,14 +1765,11 @@ class StatMonkey:
                             "label[group='Assist Style'][position()=1]/text/text()"
                         )[0]
                     )
-                    print(style)
                     assistStyles[style] = (
                         assistStyles[style] + 1 if style in assistStyles else 1
                     )
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
-        path = f"Stat PNGs/{player.replace(' ', '_')}_Assist_Breakdown.png"
-        print(sum(assistStyles.values()))
         plt.pie(
             assistStyles.values(),
             labels=assistStyles.keys(),
@@ -1711,9 +1779,14 @@ class StatMonkey:
         plt.title(f"{player} Assist Breakdown ({len(assistStyles.keys())} Total)")
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         return path
 
     def getTopCarriers(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Carriers.png"
+        self.logger.info(f"Started {path}")
+
         plt.figure(figsize=(self.figWidth, self.figHeight))
         carriers = {}
         for xmlFile in self.xmlFiles:
@@ -1751,12 +1824,15 @@ class StatMonkey:
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Top_Carriers.png"
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
+
         return path
 
     def getCarryBreakdown(self, player):
+        path = f"Stat PNGs/{player.replace(' ', '_')}_Carry_Breakdown.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         breakdown = {}
         for xmlFile in self.xmlFiles:
@@ -1786,7 +1862,6 @@ class StatMonkey:
 
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
-        path = f"Stat PNGs/{player.replace(' ', '_')}_Carry_Breakdown.png"
         plt.pie(
             breakdown.values(),
             labels=breakdown.keys(),
@@ -1796,10 +1871,13 @@ class StatMonkey:
         plt.title(f"{player} Carries Breakdown")
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     # WIP
     def getTurnoverStats(self):
+        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_Turnover_Breakdown.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         breakdown = {}
         total = 0
@@ -1823,7 +1901,6 @@ class StatMonkey:
 
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
-        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_Turnover_Breakdown.png"
         sortedBreakdown = OrderedDict(
             sorted(breakdown.items(), key=itemgetter(1), reverse=True)
         )
@@ -1855,9 +1932,12 @@ class StatMonkey:
         plt.title(f"{self.teamName} Turnover Breakdown ({total} Total)")
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getPlayerTurnoverCount(self):
+        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_Turnover_Count.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         breakdown = {}
         for xmlFile in self.xmlFiles:
@@ -1875,7 +1955,6 @@ class StatMonkey:
 
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
-        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_Turnover_Count.png"
         median = statistics.median(breakdown.values())
         for player in breakdown:
             if breakdown[player] > median:
@@ -1911,9 +1990,12 @@ class StatMonkey:
         plt.title(f"{self.teamName} Player Turnover Count")
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
     def getPlayerTurnoverBD(self, player):
+        path = f"Stat PNGs/{player}_Turnover_Breakdown.png"
+        self.logger.info(f"Started {path}")
         plt.figure(figsize=(self.figWidth, self.figHeight))
         breakdown = {}
         total = 0
@@ -1938,7 +2020,6 @@ class StatMonkey:
 
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
-        path = f"Stat PNGs/{player}_Turnover_Breakdown.png"
         plt.pie(
             breakdown.values(),
             labels=breakdown.keys(),
@@ -1947,6 +2028,7 @@ class StatMonkey:
         plt.title(f"{player} Turnover Breakdown ({total} Total)")
         plt.savefig(path)
         plt.close()
+        self.logger.info(f"Finished {path}")
         return path
 
 
@@ -1965,8 +2047,8 @@ def main():
     trackedTeam = str(args.team)
     sm = StatMonkey(xml_files, trackedTeam)
 
-    stats1 = sm.getPlayerTurnoverBD("Jordan Trainor")
-    sm.show(stats1)
+    stats1 = sm.getAllStats()
+    sm.addAllStatsToPres(stats1)
 
 
 if __name__ == "__main__":
