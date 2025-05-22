@@ -811,7 +811,6 @@ class StatMonkey:
                             "label[group='Player'][position()=1]/text/text()"
                         )[0]
                     )
-
                     playerBreaks[player] = (
                         playerBreaks[player] + 1 if player in playerBreaks else 1
                     )
@@ -825,7 +824,13 @@ class StatMonkey:
         sortedPlayerBreaks = OrderedDict(
             sorted(playerBreaks.items(), key=itemgetter(1), reverse=True)
         )
-        bars = plt.bar(sortedPlayerBreaks.keys(), sortedPlayerBreaks.values())
+        bars = plt.bar(
+            [
+                key[:15] + "..." if len(key) >= 15 else key
+                for key in sortedPlayerBreaks.keys()
+            ],
+            sortedPlayerBreaks.values(),
+        )
         for bar in bars:
             height = bar.get_height()
             plt.text(
@@ -837,7 +842,7 @@ class StatMonkey:
                 fontweight="bold",
             )
         plt.ylabel("Number of Breaks")
-        plt.xticks(rotation=45)
+        plt.xticks(rotation=60)
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)
         plt.savefig(path)
@@ -846,7 +851,7 @@ class StatMonkey:
         return path
 
     def getLinebreakPhases(self):
-        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Linebreak_Phases.png"
+        path = f"Stat PNGs/{self.teamName.replace(' ', '_')}_Linebreak_Phases.png"
         self.logger.info(f"Started {path}")
 
         fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
@@ -860,9 +865,11 @@ class StatMonkey:
                 )
 
                 for linebreak in linebreaks:
-                    phase = linebreak.xpath(
-                        "label[group='Phase Number'][position()=1]/text/text()"
-                    )[0]
+                    phase = str(
+                        linebreak.xpath(
+                            "label[group='Phase Number'][position()=1]/text/text()"
+                        )[0]
+                    )
                     breakPhases[phase] = (
                         breakPhases[phase] + 1 if phase in breakPhases else 1
                     )
@@ -872,11 +879,14 @@ class StatMonkey:
 
         plt.title(f"Phase Of Linebreaks")
 
+        # Sort by key (phase number) instead of value
         sortedBreakPhases = OrderedDict(
             sorted(breakPhases.items(), key=itemgetter(1), reverse=True)
         )
-
+        # Create the bar chart
         bars = ax.bar(sortedBreakPhases.keys(), sortedBreakPhases.values())
+
+        # Add text annotations
         for bar in bars:
             height = bar.get_height()
             if height < 2:
@@ -899,11 +909,17 @@ class StatMonkey:
                     va="center",
                     fontweight="bold",
                 )
+
         ax.set_ylabel("Number of Breaks")
         ax.tick_params(axis="x", rotation=45)
 
+        # Force integer ticks on x-axis
+        # ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+
+        # # Set x-axis to show only the phases that actually exist in your data
+        # ax.set_xticks(list(sortedBreakPhases.keys()))
+
         # ax.set_aspect('equal', adjustable='box')
-        ax.yaxis.set_major_locator(tck.MultipleLocator())
         plt.savefig(path)
         plt.close()
         self.logger.info(f"Finished {path}")
@@ -1470,7 +1486,7 @@ class StatMonkey:
                 tree = etree.parse(str(xmlFile))
                 root = tree.getroot()
                 pens = root.xpath(
-                    f"//instance[code='{self.teamName} Penalty Conceded' and label[text='Scrum Offence' and group='Pen Descriptor'] and label[text='{player}' and group='Player']]"
+                    f"""//instance[code="{self.teamName} Penalty Conceded" and label[text="Scrum Offence" and group="Pen Descriptor"] and label[text="{player}" and group="Player"]]"""
                 )
                 for pen in pens:
                     offence = str(
@@ -1491,7 +1507,7 @@ class StatMonkey:
         plt.pie(
             sortedPlayerPens.values(),
             labels=sortedPlayerPens.keys(),
-            autopct=lambda p: f"{int(int(p*sum(sortedPlayerPens.values())) / 100)}",
+            autopct=lambda p: f"{int(p*sum(sortedPlayerPens.values())/100)}",
         )
         plt.savefig(path)
         plt.close()
@@ -1862,10 +1878,12 @@ class StatMonkey:
 
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
+            print(player, breakdown)
+        total = sum(list(breakdown.values()))
         plt.pie(
             breakdown.values(),
             labels=breakdown.keys(),
-            autopct=lambda p: f"{int(int(p*sum(breakdown.values())) / 100)}",
+            autopct=lambda pct: f"{int(round(np.divide(np.multiply(pct, total), 100)))}",
         )
 
         plt.title(f"{player} Carries Breakdown")
@@ -1956,13 +1974,18 @@ class StatMonkey:
             except etree.XMLSyntaxError as e:
                 print(f"Error parsing {xmlFile.name}: {e}")
         median = statistics.median(breakdown.values())
-        for player in breakdown:
-            if breakdown[player] > median:
-                self.topTurnovers.append(player)
         sortedBreakdown = OrderedDict(
             sorted(breakdown.items(), key=itemgetter(1), reverse=True)
         )
-        bars = plt.bar(sortedBreakdown.keys(), sortedBreakdown.values())
+        for player in sortedBreakdown:
+            if breakdown[player] > median:
+                self.topTurnovers.append(player)
+        x = []
+        y = []
+        for player in self.topTurnovers:
+            x.append(player)
+            y.append(breakdown[player])
+        bars = plt.bar(x, y)
         for bar in bars:
             height = bar.get_height()
             if height < 2:
@@ -1988,7 +2011,10 @@ class StatMonkey:
         plt.xticks(rotation=60)
         plt.subplots_adjust(bottom=0.25)
         plt.title(f"{self.teamName} Player Turnover Count")
+        plt.tight_layout()
+
         plt.savefig(path)
+
         plt.close()
         self.logger.info(f"Finished {path}")
         return path
@@ -2023,9 +2049,133 @@ class StatMonkey:
         plt.pie(
             breakdown.values(),
             labels=breakdown.keys(),
-            autopct=lambda p: f"{int(int(p*sum(breakdown.values())) / 100)}",
+            autopct=lambda p: f"{int(p*sum(breakdown.values())/100)}",
         )
         plt.title(f"{player} Turnover Breakdown ({total} Total)")
+        plt.savefig(path)
+        plt.close()
+        self.logger.info(f"Finished {path}")
+        return path
+
+    def getTapPensPerGame(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Tap_Pens_Per_Game.png"
+        self.logger.info(f"Started {path}")
+        plt.figure(figsize=(self.figWidth, self.figHeight))
+        games = {}
+        for xmlFile in self.xmlFiles:
+            try:
+                tree = etree.parse(str(xmlFile))
+                root = tree.getroot()
+                tapPens = root.xpath(f"//instance[code='{self.teamName} Tap Pen']")
+                date = root.xpath("//SESSION_INFO")[0].text.split()[0]
+                games[date] = len(tapPens)
+            except etree.XMLSyntaxError as e:
+                print(f"Error parsing {xmlFile.name}: {e}")
+        plt.title(f"Tap Pens Per Game")
+        bars = plt.bar(
+            list(games.keys()),
+            list(games.values()),
+        )
+        for bar in bars:
+            height = bar.get_height()
+            plt.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                (height / 2) if height != 0 else 1,
+                f"{int(height)}",
+                ha="center",
+                va="center",
+                fontweight="bold",
+            )
+        plt.ylabel("Tap Penalties")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.25)
+        plt.savefig(path)
+        plt.close()
+        self.logger.info(f"Finished {path}")
+        return path
+
+    def getTapPenTrysPerGame(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Tap_Pen_Trys_Per_Game.png"
+        self.logger.info(f"Started {path}")
+        plt.figure(figsize=(self.figWidth, self.figHeight))
+        games = {}
+        for xmlFile in self.xmlFiles:
+            try:
+                tree = etree.parse(str(xmlFile))
+                root = tree.getroot()
+                tapPens = root.xpath(
+                    f"//instance[code='{self.teamName} Tap Pen' and label[text='End Try' and group='Poss Endset']]"
+                )
+                date = root.xpath("//SESSION_INFO")[0].text.split()[0]
+                games[date] = len(tapPens)
+
+            except etree.XMLSyntaxError as e:
+                print(f"Error parsing {xmlFile.name}: {e}")
+        plt.title(f"Tap Pen Trys Per Game")
+        bars = plt.bar(
+            list(games.keys()),
+            list(games.values()),
+        )
+        for bar in bars:
+            height = bar.get_height()
+            plt.text(
+                bar.get_x() + bar.get_width() / 2.0,
+                (height / 2) if height != 0 else 1,
+                f"{int(height)}",
+                ha="center",
+                va="center",
+                fontweight="bold",
+            )
+        plt.ylabel("Trys")
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.25)
+        plt.savefig(path)
+        plt.close()
+        self.logger.info(f"Finished {path}")
+        return path
+
+    def getTapPenLocations(self):
+        path = f"Stat PNGs/{self.teamName.replace(" ", "_")}_Tap_Pen_Locations.png"
+        self.logger.info(f"Started {path}")
+        fig, ax = plt.subplots(figsize=(self.figWidth, self.figHeight))
+        self.drawRugbyPitch(ax)
+        xValues = []
+        yValues = []
+        colors = []
+        games = {}
+        for xmlFile in self.xmlFiles:
+            try:
+                tree = etree.parse(str(xmlFile))
+                root = tree.getroot()
+                tapPens = root.xpath(f"//instance[code='{self.teamName} Tap Pen']")
+                date = root.xpath("//SESSION_INFO")[0].text.split()[0]
+                games[date] = len(tapPens)
+                for instance in tapPens:
+                    xStart = (
+                        float(instance.xpath("label[group='X_Start']/text/text()")[0])
+                        + self.tryZone
+                    )
+                    yStart = self.fieldWidth - float(
+                        instance.xpath("label[group='Y_Start']/text/text()")[0]
+                    )
+
+                    xValues.append(xStart)
+                    yValues.append(yStart)
+                    if (
+                        str(instance.xpath("label[group='Poss Endset']/text/text()")[0])
+                        == "End Try"
+                    ):
+                        colors.append("#3BB273")
+                    else:
+                        colors.append("#1f77b4")
+            except etree.XMLSyntaxError as e:
+                print(f"Error parsing {xmlFile.name}: {e}")
+        pos = mpatches.Patch(color="#3BB273", label=f"Try Scored")
+        ax.scatter(xValues, yValues, c=colors)
+        plt.title(f"Tap Pen Locations")
+        plt.legend(handles=[pos], loc="lower left")
         plt.savefig(path)
         plt.close()
         self.logger.info(f"Finished {path}")
@@ -2048,6 +2198,7 @@ def main():
     sm = StatMonkey(xml_files, trackedTeam)
 
     stats1 = sm.getAllStats()
+
     sm.addAllStatsToPres(stats1)
 
 
