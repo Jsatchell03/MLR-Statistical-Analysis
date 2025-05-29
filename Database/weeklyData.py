@@ -117,7 +117,7 @@ class Kick(BaseEvent):
         return cleaned_value
 
 
-class Breaks(BaseEvent):
+class Break(BaseEvent):
     def __init__(self, x, y, phase, period, player):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
@@ -126,7 +126,7 @@ class Breaks(BaseEvent):
         self._validate_and_set("player", player, self._validate_string)
 
 
-class Mauls(BaseEvent):
+class Maul(BaseEvent):
     def __init__(self, x, y, meters_gained, period, try_scored):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
@@ -280,15 +280,38 @@ class StatExtractor:
     HALFWAY_LINE = FIELD_LENGTH / 2
 
     def __init__(self, xml_file):
-        self.kicks = [[], []]
-        self.linebreaks = [[], []]
-        self.mauls = [[], []]
         self.xml_file = xml_file
         self.tree = etree.parse(str(xml_file))
         self.root = self.tree.getroot()
         self.teams = self.get_team_names()
         self.date = self.root.xpath("//SESSION_INFO")[0].text.split()[0]
         print(self.teams)
+        self.data = {
+            self.teams[0]: {
+                "opposition": self.teams[1],
+                "kicks": [],
+                "linebreaks": [],
+                "mauls": [],
+                "tries": [],
+                "penalties": [],
+                "scrums": [],
+                "turnovers": [],
+                "carries": [],
+                "tackles": [],
+            },
+            self.teams[1]: {
+                "opposition": self.teams[0],
+                "kicks": [],
+                "linebreaks": [],
+                "mauls": [],
+                "tries": [],
+                "penalties": [],
+                "scrums": [],
+                "turnovers": [],
+                "carries": [],
+                "tackles": [],
+            },
+        }
 
     def get_all(self):
         return self.get_kicks(), self.get_linebreaks(), self.get_mauls()
@@ -317,7 +340,7 @@ class StatExtractor:
                     instance.xpath("label[group='Period'][position()=1]/text/text()")[0]
                 ),
             )
-            self.kicks[0].append(kick.to_dict())
+            self.data[self.teams[0]]["kicks"].append(kick.to_dict())
 
         for instance in away_kicks:
             descriptor = str(
@@ -349,8 +372,9 @@ class StatExtractor:
                     instance.xpath("label[group='Period'][position()=1]/text/text()")[0]
                 ),
             )
-            self.kicks[1].append(kick.to_dict())
-        return self.kicks
+        return self.data[self.teams[0]]["kicks"].append(kick.to_dict()), self.data[
+            self.teams[1]
+        ]["kicks"].append(kick.to_dict())
 
     def get_linebreaks(self):
         home_linebreaks = self.root.xpath(
@@ -360,40 +384,44 @@ class StatExtractor:
             f"//instance[label[text='Initial Break' and group='Attacking Qualities'] and label[text='{self.teams[1]}' and group='Attacking Quality']]"
         )
         for instance in home_linebreaks:
-            linebreak = {}
-            linebreak["x"] = (
-                float(instance.xpath("label[group='X_Start']/text/text()")[0])
-                + self.TRY_ZONE
+            linebreak = Break(
+                (
+                    float(instance.xpath("label[group='X_Start']/text/text()")[0])
+                    + self.TRY_ZONE
+                ),
+                self.FIELD_WIDTH
+                - float(instance.xpath("label[group='Y_Start']/text/text()")[0]),
+                instance.xpath("label[group='Phase Number'][position()=1]/text/text()")[
+                    0
+                ],
+                instance.xpath("label[group='Period'][position()=1]/text/text()")[0],
+                str(
+                    instance.xpath("label[group='Player'][position()=1]/text/text()")[0]
+                ),
             )
-            linebreak["y"] = self.FIELD_WIDTH - float(
-                instance.xpath("label[group='Y_Start']/text/text()")[0]
-            )
-            linebreak["phase"] = instance.xpath(
-                "label[group='Phase Number'][position()=1]/text/text()"
-            )[0]
-            linebreak["player"] = str(
-                instance.xpath("label[group='Player'][position()=1]/text/text()")[0]
-            )
-            self.linebreaks[0].append(linebreak)
+            self.data[self.teams[0]]["linebreaks"].append(linebreak.to_dict())
 
         for instance in away_linebreaks:
-            linebreak = {}
-            linebreak["x"] = (
-                float(instance.xpath("label[group='X_Start']/text/text()")[0])
-                + self.TRY_ZONE
+            linebreak = Break(
+                (
+                    float(instance.xpath("label[group='X_Start']/text/text()")[0])
+                    + self.TRY_ZONE
+                ),
+                self.FIELD_WIDTH
+                - float(instance.xpath("label[group='Y_Start']/text/text()")[0]),
+                instance.xpath("label[group='Phase Number'][position()=1]/text/text()")[
+                    0
+                ],
+                instance.xpath("label[group='Period'][position()=1]/text/text()")[0],
+                str(
+                    instance.xpath("label[group='Player'][position()=1]/text/text()")[0]
+                ),
             )
-            linebreak["y"] = self.FIELD_WIDTH - float(
-                instance.xpath("label[group='Y_Start']/text/text()")[0]
-            )
-            linebreak["phase"] = instance.xpath(
-                "label[group='Phase Number'][position()=1]/text/text()"
-            )[0]
-            linebreak["player"] = str(
-                instance.xpath("label[group='Player'][position()=1]/text/text()")[0]
-            )
-            self.linebreaks[1].append(linebreak)
+            self.data[self.teams[1]]["linebreaks"].append(linebreak.to_dict())
 
-        return self.linebreaks
+        return self.data[self.teams[0]]["linebreaks"].append(
+            linebreak.to_dict()
+        ), self.data[self.teams[1]]["linebreaks"].append(linebreak.to_dict())
 
     def get_mauls(self):
         home_mauls = self.root.xpath(f"//instance[code='{self.teams[0]} Maul']")
@@ -492,7 +520,7 @@ def main():
         linebreaks = extractor.get_linebreaks()
         mauls = extractor.get_mauls()
         for i in range(len(teams)):
-            doc = {"game": extractor.date}
+            doc = {"date": extractor.date}
             doc["kicks"] = kicks[i]
             doc["linebreaks"] = linebreaks[i]
             doc["mauls"] = mauls[i]
