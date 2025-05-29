@@ -41,9 +41,9 @@ class Mongo:
     def __init__(self):
         pass
 
-    def addWeek(self, team, obj):
+    def addGame(self, team, obj):
         self.teamsCol.update_one(
-            {"_id": ObjectId(self.teams[team])}, {"$push": {"weeks": obj}}
+            {"_id": ObjectId(self.teams[team])}, {"$push": {"games": obj}}
         )
 
     def updateDoc(self, obj):
