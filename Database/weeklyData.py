@@ -62,14 +62,6 @@ class BaseEvent:
             )
         return value
 
-    def _validate_period(self, period, field_name):
-        """Validate period number"""
-        if not isinstance(period, int):
-            self._raise_validation_error(field_name, "must be an integer", period)
-        if period < 1 or period > 2:  # Assuming 2 periods in XML files
-            self._raise_validation_error(field_name, "must be 1 or 2", period)
-        return period
-
     def _validate_string(self, value, field_name):
         """Validate string fields"""
         if not isinstance(value, str) or not value.strip():
@@ -108,7 +100,7 @@ class Kick(BaseEvent):
         self._validate_and_set("y_end", y_end, self._validate_y_coordinate)
         self._validate_and_set("kick_style", kick_style, self._validate_kick_style)
         self._validate_and_set("kicker", kicker, self._validate_string)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
 
     def _validate_kick_style(self, value, field_name):
         if not isinstance(value, str) or not value.strip():
@@ -130,7 +122,7 @@ class Breaks(BaseEvent):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
         self._validate_and_set("phase", phase, self._validate_string)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("player", player, self._validate_string)
 
 
@@ -139,14 +131,14 @@ class Mauls(BaseEvent):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
         self._validate_and_set("meters_gained", meters_gained, self._validate_number)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("try_scored", try_scored, self._validate_boolean)
 
 
 class TwentyTwoEntry(BaseEvent):
     def __init__(self, points_scored, period, conversion_attempted):
         self._validate_and_set("points_scored", points_scored, self._validate_number)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set(
             "conversion_attempted", conversion_attempted, self._validate_boolean
         )
@@ -156,7 +148,7 @@ class PenaltyKick(BaseEvent):
     def __init__(self, x, y, period, phase, distance, player, successful):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("distance", distance, self._validate_number)
         self._validate_and_set("player", player, self._validate_string)
@@ -167,7 +159,7 @@ class GoalKick(BaseEvent):
     def __init__(self, x, y, period, distance, player, successful):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("distance", distance, self._validate_number)
         self._validate_and_set("player", player, self._validate_string)
         self._validate_and_set("successful", successful, self._validate_boolean)
@@ -179,14 +171,14 @@ class Try(BaseEvent):
         self._validate_and_set("y", y, self._validate_y_coordinate)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("player", player, self._validate_string)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
 
 
 class Scrum(BaseEvent):
     def __init__(self, x, y, result, option, period):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("result", result, self._validate_string)
         self._validate_and_set("option", option, self._validate_string)
 
@@ -195,7 +187,7 @@ class PenaltyConceded(BaseEvent):
     def __init__(self, x, y, offense, player, phase, period):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("player", player, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("offense", offense, self._validate_string)
@@ -205,7 +197,7 @@ class Turnover(BaseEvent):
     def __init__(self, x, y, player, phase, period, descriptor):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("player", player, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("descriptor", descriptor, self._validate_string)
@@ -215,7 +207,7 @@ class PenaltyWon(BaseEvent):
     def __init__(self, x, y, player, phase, period, offense):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("player", player, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("offense", offense, self._validate_string)
@@ -225,7 +217,7 @@ class Carry(BaseEvent):
     def __init__(self, x, y, player, phase, period, outcome):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("player", player, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("outcome", outcome, self._validate_string)
@@ -235,7 +227,7 @@ class Tackle(BaseEvent):
     def __init__(self, x, y, player, phase, period, contact):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("player", player, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("contact", contact, self._validate_string)
@@ -245,7 +237,7 @@ class AtackingLineout(BaseEvent):
     def __init__(self, x, y, period, throw_length, outcome, option):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("throw_length", throw_length, self._validate_string)
         self._validate_and_set("outcome", outcome, self._validate_string)
         self._validate_and_set("option", option, self._validate_string)
@@ -255,7 +247,7 @@ class BreakAssists(BaseEvent):
     def __init__(self, x, y, player, phase, period, type):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("player", player, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("type", type, self._validate_string)
@@ -265,7 +257,7 @@ class TryAssists(BaseEvent):
     def __init__(self, x, y, player, phase, period, type):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("player", player, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("type", type, self._validate_string)
@@ -275,7 +267,7 @@ class Ruck(BaseEvent):
     def __init__(self, x, y, phase, period, speed, outcome):
         self._validate_and_set("x", x, self._validate_x_coordinate)
         self._validate_and_set("y", y, self._validate_y_coordinate)
-        self._validate_and_set("period", period, self._validate_period)
+        self._validate_and_set("period", period, self._validate_string)
         self._validate_and_set("phase", phase, self._validate_number)
         self._validate_and_set("speed", speed, self._validate_string)
         self._validate_and_set("outcome", outcome, self._validate_string)
@@ -292,7 +284,10 @@ class StatExtractor:
         self.linebreaks = [[], []]
         self.mauls = [[], []]
         self.xml_file = xml_file
+        self.tree = etree.parse(str(xml_file))
+        self.root = self.tree.getroot()
         self.teams = self.get_team_names()
+        self.date = self.root.xpath("//SESSION_INFO")[0].text.split()[0]
         print(self.teams)
 
     def get_all(self):
@@ -302,109 +297,66 @@ class StatExtractor:
         # self.get_carries(), self.get_tackles(), self.get_attacking_lineouts(), self.get_defensive_lineouts(), self.get_break_assists(), self.get_try_assists()
 
     def get_kicks(self):
-        tree = etree.parse(str(self.xml_file))
-        root = tree.getroot()
-        home_kicks = root.xpath(f"//instance[code='{self.teams[0]} Kick']")
-        away_kicks = root.xpath(f"//instance[code='{self.teams[1]} Kick']")
+        home_kicks = self.root.xpath(f"//instance[code='{self.teams[0]} Kick']")
+        away_kicks = self.root.xpath(f"//instance[code='{self.teams[1]} Kick']")
         for instance in home_kicks:
-            kick = {}
-            descriptor = str(
-                instance.xpath("label[group='Kick Descriptor']/text/text()")[0]
+            kick = Kick(
+                x_start=float(instance.xpath("label[group='X_Start']/text/text()")[0])
+                + self.TRY_ZONE,
+                y_start=self.FIELD_WIDTH
+                - float(instance.xpath("label[group='Y_Start']/text/text()")[0]),
+                x_end=float(instance.xpath("label[group='X_End']/text/text()")[0])
+                + self.TRY_ZONE,
+                y_end=self.FIELD_WIDTH
+                - float(instance.xpath("label[group='Y_End']/text/text()")[0]),
+                kick_style=kick_stlyle,
+                kicker=str(
+                    instance.xpath("label[group='Player'][position()=1]/text/text()")[0]
+                ),
+                period=str(
+                    instance.xpath("label[group='Period'][position()=1]/text/text()")[0]
+                ),
             )
-            if descriptor == "Touch Kick":
-                continue
-            kick["kicker"] = str(
-                instance.xpath("label[group='Player'][position()=1]/text/text()")[0]
-            )
-            kick["x_start"] = (
-                float(instance.xpath("label[group='X_Start']/text/text()")[0])
-                + self.TRY_ZONE
-            )
-            kick["y_start"] = self.FIELD_WIDTH - float(
-                instance.xpath("label[group='Y_Start']/text/text()")[0]
-            )
-            kick["x_end"] = (
-                float(instance.xpath("label[group='X_End']/text/text()")[0])
-                + self.TRY_ZONE
-            )
-            kick["y_end"] = self.FIELD_WIDTH - float(
-                instance.xpath("label[group='Y_End']/text/text()")[0]
-            )
-            kick_style = str(instance.xpath("label[group='Kick Style']/text/text()")[0])
-            if kick_style == "Box":
-                kick["type"] = "windy"
-            else:
-                match descriptor:
-                    # Pocket
-                    case "Territorial":
-                        kick["type"] = "pocket"
-                    # Ice
-                    case "Low":
-                        kick["type"] = "ice"
-                    # Snow
-                    case "Bomb":
-                        kick["type"] = "snow"
-                    # Wedge
-                    case "Chip":
-                        kick["type"] = "wedge"
-                    # Kick Pass
-                    case "Cross Pitch":
-                        kick["type"] = "kp"
-            self.kicks[0].append(kick)
+            self.kicks[0].append(kick.to_dict())
+
         for instance in away_kicks:
-            kick = {}
             descriptor = str(
-                instance.xpath("label[group='Kick Descriptor']/text/text()")[0]
+                kick.xpath("label[group='Kick Descriptor']/text/text()")[0]
             )
+            style = str(kick.xpath("label[group='Kick Style']/text/text()")[0])
             if descriptor == "Touch Kick":
                 continue
-            kick["kicker"] = str(
-                instance.xpath("label[group='Player'][position()=1]/text/text()")[0]
-            )
-            kick["x_start"] = (
-                float(instance.xpath("label[group='X_Start']/text/text()")[0])
-                + self.TRY_ZONE
-            )
-            kick["y_start"] = self.FIELD_WIDTH - float(
-                instance.xpath("label[group='Y_Start']/text/text()")[0]
-            )
-            kick["x_end"] = (
-                float(instance.xpath("label[group='X_End']/text/text()")[0])
-                + self.TRY_ZONE
-            )
-            kick["y_end"] = self.FIELD_WIDTH - float(
-                instance.xpath("label[group='Y_End']/text/text()")[0]
-            )
-            kick_style = str(instance.xpath("label[group='Kick Style']/text/text()")[0])
-            if kick_style == "Box":
-                kick["type"] = "windy"
+
+            if style == "Box":
+                kick_stlyle = "box"
             else:
-                match descriptor:
-                    # Pocket
-                    case "Territorial":
-                        kick["type"] = "pocket"
-                    # Ice
-                    case "Low":
-                        kick["type"] = "ice"
-                    # Snow
-                    case "Bomb":
-                        kick["type"] = "snow"
-                    # Wedge
-                    case "Chip":
-                        kick["type"] = "wedge"
-                    # Kick Pass
-                    case "Cross Pitch":
-                        kick["type"] = "kp"
-            self.kicks[1].append(kick)
+                kick_stlyle = descriptor
+
+            kick = Kick(
+                x_start=float(instance.xpath("label[group='X_Start']/text/text()")[0])
+                + self.TRY_ZONE,
+                y_start=self.FIELD_WIDTH
+                - float(instance.xpath("label[group='Y_Start']/text/text()")[0]),
+                x_end=float(instance.xpath("label[group='X_End']/text/text()")[0])
+                + self.TRY_ZONE,
+                y_end=self.FIELD_WIDTH
+                - float(instance.xpath("label[group='Y_End']/text/text()")[0]),
+                kick_style=kick_stlyle,
+                kicker=str(
+                    instance.xpath("label[group='Player'][position()=1]/text/text()")[0]
+                ),
+                period=str(
+                    instance.xpath("label[group='Period'][position()=1]/text/text()")[0]
+                ),
+            )
+            self.kicks[1].append(kick.to_dict())
         return self.kicks
 
     def get_linebreaks(self):
-        tree = etree.parse(str(self.xml_file))
-        root = tree.getroot()
-        home_linebreaks = root.xpath(
+        home_linebreaks = self.root.xpath(
             f"//instance[label[text='Initial Break' and group='Attacking Qualities'] and label[text='{self.teams[0]}' and group='Attacking Quality']]"
         )
-        away_linebreaks = root.xpath(
+        away_linebreaks = self.root.xpath(
             f"//instance[label[text='Initial Break' and group='Attacking Qualities'] and label[text='{self.teams[1]}' and group='Attacking Quality']]"
         )
         for instance in home_linebreaks:
@@ -444,10 +396,8 @@ class StatExtractor:
         return self.linebreaks
 
     def get_mauls(self):
-        tree = etree.parse(str(self.xml_file))
-        root = tree.getroot()
-        home_mauls = root.xpath(f"//instance[code='{self.teams[0]} Maul']")
-        away_mauls = root.xpath(f"//instance[code='{self.teams[1]} Maul']")
+        home_mauls = self.root.xpath(f"//instance[code='{self.teams[0]} Maul']")
+        away_mauls = self.root.xpath(f"//instance[code='{self.teams[1]} Maul']")
         for instance in home_mauls:
             maul = {}
             maul["x"] = (
@@ -495,11 +445,8 @@ class StatExtractor:
 
     # Get all restart kicks and receptions loop through until you pull both team names
     def get_team_names(self):
-        tree = etree.parse(str(self.xml_file))
-        root = tree.getroot()
-
-        restart_kicks = root.xpath("//instance[contains(code, 'Restart Kick')]")
-        restart_receptions = root.xpath(
+        restart_kicks = self.root.xpath("//instance[contains(code, 'Restart Kick')]")
+        restart_receptions = self.root.xpath(
             "//instance[contains(code, 'Restart Reception')]"
         )
         teams = []
@@ -521,10 +468,8 @@ class StatExtractor:
         return teams
 
     def get_instances(self, code):
-        tree = etree.parse(str(self.xml_file))
-        root = tree.getroot()
-        home_instances = root.xpath(f"//instance[code='{self.teams[0]} {code}']")
-        away_instances = root.xpath(f"//instance[code='{self.teams[1]} {code}']")
+        home_instances = self.root.xpath(f"//instance[code='{self.teams[0]} {code}']")
+        away_instances = self.root.xpath(f"//instance[code='{self.teams[1]} {code}']")
         return home_instances, away_instances
 
 
@@ -533,12 +478,10 @@ def main():
         description="Process Weekly XML files in a directory"
     )
     parser.add_argument("folder", help="Path to folder containing XML files")
-    parser.add_argument("week", help="Week these files reference")
 
     args = parser.parse_args()
     directory = Path(args.folder)
     files = list(directory.glob("*.xml"))
-    week = int(args.week)
 
     db = Mongo()
 
@@ -549,11 +492,11 @@ def main():
         linebreaks = extractor.get_linebreaks()
         mauls = extractor.get_mauls()
         for i in range(len(teams)):
-            doc = {"week": week}
+            doc = {"game": extractor.date}
             doc["kicks"] = kicks[i]
             doc["linebreaks"] = linebreaks[i]
             doc["mauls"] = mauls[i]
-            db.addWeek(teams[i], doc)
+            db.addGame(teams[i], doc)
 
 
 if __name__ == "__main__":
