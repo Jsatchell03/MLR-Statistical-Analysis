@@ -8,10 +8,10 @@ from bson.objectid import ObjectId
 # Handle all mongo fucntions
 
 # teams {
-#    chicagoHounds: {2025:[{kicks, linebreaks, mauls}, by week], 2026:[]}
+#    chicagoHounds: {2025:[{kicks, linebreaks, mauls}, by game], 2026:[]}
 # }
 #   2025
-#       week1
+#       game
 #          kicks[{type, start{x,y}, end{x,y}, kicker}]
 #           linebreaks[{location{x,y}, player, phase}]
 #           mauls[location{x,y}, metersGained, tryScored?]
