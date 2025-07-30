@@ -28,24 +28,24 @@ These tools automated the weekly reporting process, saving time and improving th
 
 XML Sample
 
-<img src="assets/read-me-assets/sample-xml.png" alt="XML Sample" width="300"/>
+<img src="read-me-assets/sample-xml.png" alt="XML Sample" width="300"/>
 
 Results
 
-<img src="assets/read-me-assets/stat-monkey-1.png" alt="Sample Stat Monkey Result" width="500"/>
-<img src="assets/read-me-assets/stat-monkey-2.png" alt="Sample Stat Monkey Result" width="500"/>
-<img src="assets/read-me-assets/stat-monkey-3.png" alt="Sample Stat Monkey Result" width="500"/>
+<img src="read-me-assets/stat-monkey-1.png" alt="Sample Stat Monkey Result" width="500"/>
+<img src="read-me-assets/stat-monkey-2.png" alt="Sample Stat Monkey Result" width="500"/>
+<img src="read-me-assets/stat-monkey-3.png" alt="Sample Stat Monkey Result" width="500"/>
 
 ### **Team_Report.py**
 
 Excel Sample
 
-<img src="assets/read-me-assets/excel-sample.png" alt="Excel Sample" width="300"/>
+<img src="read-me-assets/excel-sample.png" alt="Excel Sample" width="300"/>
 
 Results
 
-<img src="assets/read-me-assets/team-report-1.png" alt="Sample Team Report Result" width="500"/>
-<img src="assets/read-me-assets/team-report-2.png" alt="Sample Team Report Result" width="500"/>
+<img src="read-me-assets/team-report-1.png" alt="Sample Team Report Result" width="500"/>
+<img src="read-me-assets/team-report-2.png" alt="Sample Team Report Result" width="500"/>
 
 ## Acknowledgments
 - Oval Insights and Major League Rugby for providing the match event XML files
